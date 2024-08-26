@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 
-public class Server extends Thread {
+public class Server {
     static List validPaths;
     static ExecutorService threadPool;
 
@@ -23,9 +23,9 @@ public class Server extends Thread {
 
     //метод для: обработки конкретного подключения.
     public static void listen(int port) { //9999
-        threadPool.submit(() -> {
-            try (final var serverSocket = new ServerSocket(port)) {
-                while (true) {
+        try (final var serverSocket = new ServerSocket(port)) {
+            while (true) {
+                threadPool.submit(() -> {
                     try (
                             final var socket = serverSocket.accept();
                             final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -38,7 +38,7 @@ public class Server extends Thread {
 
                         if (parts.length != 3) {
                             // just close socket
-                            continue;
+                            Thread.currentThread().interrupt();
                         }
 
                         final var path = parts[1];
@@ -50,7 +50,7 @@ public class Server extends Thread {
                                             "\r\n"
                             ).getBytes());
                             out.flush();
-                            continue;
+                            Thread.currentThread().interrupt();
                         }
 
                         final var filePath = Path.of(".", "public", path);
@@ -72,7 +72,7 @@ public class Server extends Thread {
                             ).getBytes());
                             out.write(content);
                             out.flush();
-                            continue;
+                            Thread.currentThread().interrupt();
                         }
 
                         final var length = Files.size(filePath);
@@ -85,13 +85,17 @@ public class Server extends Thread {
                         ).getBytes());
                         Files.copy(filePath, out);
                         out.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Thread.currentThread().interrupt();
                     }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-                Thread.currentThread().interrupt();
+                });
             }
-        });
+        } catch (IOException e) {
+            e.printStackTrace();
+            Thread.currentThread().interrupt();
+        }
+
     }//конец метода
 
 }//конец класса
