@@ -12,12 +12,11 @@ import java.io.InputStreamReader;
 import java.util.concurrent.ExecutorService;
 
 public class Server {
-    static List validPaths;
+    final static List validPaths = List.of("/index.html", "/spring.svg", "/spring.png", "/resources.html", "/styles.css", "/app.js", "/links.html", "/forms.html", "/classic.html", "/events.html", "/events.js");;
     static ExecutorService threadPool;
 
     //методами для: запуска;
-    public static void activate(List validPaths, ExecutorService threadPool) {
-        Server.validPaths = List.of(validPaths);
+    public static void activate(ExecutorService threadPool) {
         Server.threadPool = threadPool;
     }
 
@@ -25,7 +24,7 @@ public class Server {
     public static void listen(int port) { //9999
         try (final var serverSocket = new ServerSocket(port)) {
             while (true) {
-                threadPool.submit(() -> {
+                threadPool.execute(() -> {
                     try (
                             final var socket = serverSocket.accept();
                             final var in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -93,9 +92,6 @@ public class Server {
             }
         } catch (IOException e) {
             e.printStackTrace();
-            Thread.currentThread().interrupt();
         }
-
     }//конец метода
-
 }//конец класса
